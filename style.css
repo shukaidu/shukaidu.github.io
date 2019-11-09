@@ -7,6 +7,9 @@ body {
 .topnav {
   overflow: hidden;
   background-color: #333;
+  position:fixed;
+  top: 0;
+  width:100%;
   box-shadow: 0px 3px 3px grey;
 }
 
@@ -27,9 +30,11 @@ body {
   border-bottom: 3px solid white;
 }
 
-.marginLR {
+.main {
+	margin-top:60px;
 	margin-left:10%;
 	margin-right:10%;
+	height:800px;
 }
 
 
