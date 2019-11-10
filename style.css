@@ -7,7 +7,7 @@ body {
 .topnav {
   top: 0;
   width:100%;
-  position:fixed;
+  position:sticky;
   background-color: #333;
   box-shadow: 0px 3px 3px grey;
   overflow: auto;
@@ -31,7 +31,6 @@ body {
 }
 
 .main {
-  margin-top:75px;
   margin-left:10%;
   margin-right:10%;
   height:800px;
