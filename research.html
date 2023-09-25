@@ -21,37 +21,36 @@
       <h1> Research </h1>
     </header>
 
-    My current research interests lie in the intersection of the following areas: (1) scientific machine
+    <p>My current research interests lie in the intersection of the following areas: (1) scientific machine
     learning and data-driven methods, (2) inverse and ill-posed problems, and (3) numerical
-    methods for partial differential equations.
-    <br><br>
+    methods for partial differential equations.</p>
 
-    Full publication list: see <a href="publications.html"> publications </a>
-    <br><br>
+    <p>Full publication list: see <a href="publications.html"> publications </a> </p>
 
-    Selected research highlights:
-    <br>
+    <p>Selected research highlights: </p>
 
     <h3> Element learning: a systematic approach of accelerating finite element-type methods via machine learning</h4>
-    My research interests in this area center around the consideration of the following two closely related questions:
+    <p> My research interests in this area center around the consideration of the following two closely related questions:
     <br>
-    1. What are the advantages and disadvantages of classical numerical methods (e.g. finite
+    &nbsp;&nbsp; 1. What are the advantages and disadvantages of classical numerical methods (e.g. finite
     element) and machine learning based methods?
     <br>
-    2. How to combine their advantages?
-    <br>
-    Thinking about the above two questions has led to a recent discovery of a new computational
+    &nbsp;&nbsp; 2. How to combine their advantages?
+    </p>
+
+    <p> Thinking about the above two questions has led to a recent discovery of a new computational
     framework which we call element learning. This new approach can be used to systematically
     accelerate finite element-type methods through machine learning while still retaining
     the many advantages of classical finite element-type methods, such as proficient handling
     of complex geometry and boundary conditions, reliability, and many more. See the following
     figure for a visual explanation of the core idea of element learning.
-    <br>
-    Our numerical results for radiative transfer equation show that element learning can
+    </p>
+
+    <p> Our numerical results for radiative transfer equation show that element learning can
     generally achieve at least 5-10 times speed-up compared to a classical finite element-type
     method while retaining the same accuracy requirement. We refer to <a href="https://arxiv.org/abs/2308.02467" target="_blank"> arXiv:2308.02467 </a>
     for more detail on our discovery.
-    <br>
+    </p>
 
     <img src="elem_learning.png" alt="Element learning - core ideas" width="700">
     <ul>
@@ -61,7 +60,7 @@
     </ul>
 
     <h3> Adaptive-mesh inversion: a goal-oriented hp-adaptive mesh refinement method for solving inverse radiative transfer problems</h4>
-    Inverse radiative transfer serves as the mathematical foundation for a wide spectrum of applications such as optical tomography and remote sensing.
+    <p> Inverse radiative transfer serves as the mathematical foundation for a wide spectrum of applications such as optical tomography and remote sensing.
     Despite its broad applications, devising numerical methods for inverse radiative transfer
     is notoriously challenging due to the high-dimensional nature of the forward
     problem. Standard discretizations that meet the accuracy standards often demand significant
@@ -69,9 +68,9 @@
     amplifies in the inverse problem scenario, where numerous iterations of the forward
     problems are necessary. As such, there's a pressing need to design numerical methods that
     are memory-efficient and have fewer degrees of freedom (DOFs) without compromising on
-    accuracy.
-    <br>
-    To address the challenges previously mentioned, we introduced the so called adaptive-mesh
+    accuracy. </p>
+
+    <p> To address the challenges previously mentioned, we introduced the so called adaptive-mesh
     inversion method. This is a goal-oriented hp-adaptive mesh refinement (AMR) technique tailored
     for solving inverse problems. A distinctive feature of the approach is the integration of
     two optimization processes: one for inversion and the other for mesh adaptivity. By leveraging
@@ -79,8 +78,7 @@
     techniques, we are able to devise a goal-oriented error estimator. This estimator is cost effective
     to compute. The numerical tests suggest it can efficiently steer mesh-refinement to
     effectively address the inverse radiative transfer problem.
-    The main idea of the methodology can be visually represented as in the following figure.
-    <br>
+    The main idea of the methodology can be visually represented as in the following figure. </p>
 
     <img src="adap_mesh_inv.png" alt="Adaptive mesh inversion - core ideas" width="700">
     <ul>
@@ -93,7 +91,7 @@
     </ul>
 
     <h3> Symplectic Hamiltonian finite element methods for electromagnetics</h4>
-    Symplectic Hamiltonian finite element methods (SHFEM) are a special type of numerical methods
+    <p> Symplectic Hamiltonian finite element methods (SHFEM) are a special type of numerical methods
     for numerically approximating the solution of Hamiltonian partial differential
     equations. These methods use Galerkin space-discretizations which result in a
     system of ODEs displaying a discrete version of the Hamiltonian structure of the
@@ -102,8 +100,7 @@
     discrete methods which can preserve the invariants of the Hamiltonian defining
     the ODE system. The following figure shows an example with electromagnetics waves propogating in a non-homogeneous medium.
     It shows that our SHFEM method conserves the energy of the semidiscretization in space up to 10 digits of precision,
-    and does not allow the exact energy to drift in time.
-    <br>
+    and does not allow the exact energy to drift in time. </p>
     <img src="symp_max.png" alt="SHFEM - core ideas" width="700">
     <ul>
       <li> B. Cockburn, S. Du, and M. A. S&aacute;nchez. A priori error analysis of new semidiscrete, Hamiltonian HDG methods for the time-dependent Maxwell's equations. <br>
@@ -121,11 +118,12 @@
     </ul>
 
     <h3> Generalized projection-based analysis of hybridizable discontinuous Galerkin methods</h4>
-    Hybridizable discontinuous Galerkin methods (HDG)
+    <p> Hybridizable discontinuous Galerkin methods (HDG)
     lie in between the two most important groups of finite elementtype methods:
     (1) conforming/mixed methods and (2) discontinuous Galerkin (DG) methods.
     This enables HDG to combine the many advantages from these two groups.
-    <br>
+    </p>
+    <p>
     Despite the many advantages of HDG methods, their analysis was also separated into two groups: for those more alike mixed methods, they were analyzed similar
     to the classical analysis of mixed methods, by the so-called projection-based analysis; on
     the other hands, for those more alike nonconforming/DG methods, they were analyzed by
@@ -133,15 +131,16 @@
     (1) Those ad-hoc analysis is not as concise and simple as the projection-based analysis,
     (2) Ad-hoc analysis becomes difficult for complicated problems (e.g., time-dependent problems, coupling problems),
     (3) Analysis is hard to reuse because of the separation.
-    <br>
+    </p>
+    <p>
     To address this issue, we developed the so-called generalized projection-based analysis,
     extending the classical projection-based analysis to those HDG method which do not admit
     M-decomposition (e.g. Lehrenfeld-Schoberl HDG). With these new analysis tools,
     we are able to devise/analyze new HDG methods or improve the analysis of existing ones.
     The applications include time-harmonic and transient
     elastic waves, static and time-dependent Maxwell’s equations and Stokes equations.
+    </p>
 
-    <br>
     <img src="prj_ana.png" alt="HDG projection-based analysis - core ideas" width="500">
     <ul>
       <li> B. Cockburn, S. Du, and M. A. S&aacute;nchez. A priori error analysis of new semidiscrete, Hamiltonian HDG methods for the time-dependent Maxwell's equations. <br>
