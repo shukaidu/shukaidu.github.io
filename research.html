@@ -32,8 +32,9 @@
     <h3> Element learning: a systematic approach of accelerating finite element-type methods via machine learning</h4>
     <p> My research interests in this area center around the consideration of the following two closely related questions:
     <p> &nbsp;&nbsp;&nbsp;&nbsp;
-    1. What are the advantages and disadvantages of classical numerical methods (e.g. finite
-    element) and machine learning based methods? <br>
+    1. What are the advantages and limitations of machine learning based methods compared to
+    classical numerical methods (e.g. finite
+    element)? <br>
     &nbsp;&nbsp;&nbsp;&nbsp;
     2. How to combine their advantages?
     </p></p>
@@ -46,8 +47,8 @@
     </p>
 
     <p> Our numerical results for radiative transfer equation show that element learning can
-    generally achieve at least 5-10 times speed-up compared to a classical finite element-type
-    method while retaining the same accuracy requirement. We refer to <a href="https://arxiv.org/abs/2308.02467" target="_blank">arXiv:2308.02467</a>
+    generally achieve at least <u><b>5 to 10 times speed-up</b></u> compared to a classical finite element-type
+    method while retaining the <u><b>same accuracy</b></u> requirement. We refer to <a href="https://arxiv.org/abs/2308.02467" target="_blank">arXiv:2308.02467</a>
     for more detail on our discovery. See the following
     figures for one of our numerical results and a visual explanation of the core idea of element learning.
     </p>
@@ -72,8 +73,8 @@
     accuracy. </p>
 
     <p> To address the challenges previously mentioned, we introduced the so called adaptive-mesh
-    inversion method. This is a goal-oriented hp-adaptive mesh refinement (AMR) technique tailored
-    for solving inverse problems. A distinctive feature of the approach is the integration of
+    inversion method. This is a <u><b>goal-oriented</b></u> hp-<u><b>adaptive mesh refinement</b></u> (AMR) technique <u>tailored
+    for</u> solving <u><b>inverse problems</b></u>. A distinctive feature of the approach is the integration of
     two optimization processes: one for inversion and the other for mesh adaptivity. By leveraging
     the connections between duality-based mesh adaptivity and adjoint-based inversion
     techniques, we are able to devise a goal-oriented error estimator. This estimator is cost effective
@@ -99,8 +100,8 @@
     equations. These methods use Galerkin space-discretizations which result in a
     system of ODEs displaying a discrete version of the Hamiltonian structure of the
     original system. The resulting system of ODEs is then discretized by a symplectic
-    time-marching method. This combination results in high-order accurate, fully
-    discrete methods which can preserve the invariants of the Hamiltonian defining
+    time-marching method. This combination results in <u><b>high-order accurate</b></u>, fully
+    discrete methods which can <u><b>preserve the invariants of the Hamiltonian</b></u> defining
     the ODE system. The following figure shows an example with electromagnetics waves propogating in a non-homogeneous medium.
     It shows that our SHFEM method conserves the energy of the semidiscretization in space up to 10 digits of precision,
     and does not allow the exact energy to drift in time. </p>
@@ -138,8 +139,8 @@
     <p>
     To address this issue, we developed the so-called generalized projection-based analysis,
     extending the classical projection-based analysis to those HDG method which do not admit
-    M-decomposition (e.g. Lehrenfeld-Schoberl HDG). With these new analysis tools,
-    we are able to devise/analyze new HDG methods or improve the analysis of existing ones.
+    M-decomposition (e.g. Lehrenfeld-Schoberl HDG), thus enabling a <u><b>unified analysis</b></u>. With these new analysis tools,
+    we are able to <u>devise/analyze new HDG methods</u> or <u>improve the analysis of existing ones</u>.
     The applications include time-harmonic and transient
     elastic waves, static and time-dependent Maxwell’s equations and Stokes equations.
     </p>
