@@ -45,3 +45,28 @@ footer {
   padding: 20px;
   text-align: right;
 }
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+@media screen and (max-width: 600px) {
+  .topnav a {
+    padding: 10px 10px;
+    font-size: 14px;
+  }
+  .main {
+    margin-left: 5%;
+    margin-right: 5%;
+  }
+  .row {
+    flex-direction: column;
+  }
+}
