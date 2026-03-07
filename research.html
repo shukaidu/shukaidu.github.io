@@ -12,8 +12,7 @@
     <a class="active" href="research.html">Research</a>
     <a href="publications.html">Publications</a>
     <a href="teach.html">Teaching</a>
-    <a href="contacts.html">Contacts</a>
-    <a href="index.html" style="float:right">Shukai Du's Website</a>
+    <a href="contact.html">Contact</a>
   </div>
 
   <div class="main">
@@ -22,16 +21,12 @@
       <h1> Research </h1>
     </header>
 
-    <p>My current research interests lie in the intersection of the following areas: (1) scientific machine
-    learning and data-driven methods, (2) computational inverse and ill-posed problems, and (3) numerical
-    methods for partial differential equations.</p>
+    <p>My research focuses on high-order numerical methods for high-dimensional and multiscale systems, data-driven and machine learning acceleration of principle-based numerical approaches, and applications such as electromagnetic waves, radiative transfer, and inverse problems. Below are selected research highlights.</p>
 
     <p>Full publication list: see <a href="publications.html"> publications </a> </p>
 
-    <p>Selected research highlights: </p>
-
     <h3> Element learning: a systematic approach of accelerating finite element-type methods via machine learning</h3>
-    <p> My research interests in this area center around the consideration of the following two closely related questions:
+    <p> My research in this area centers on two closely related questions:
     <p> &nbsp;&nbsp;&nbsp;&nbsp;
     1. What are the advantages and limitations of machine learning based methods compared to
     classical numerical methods (e.g. finite
@@ -104,7 +99,7 @@
     original system. The resulting system of ODEs is then discretized by a symplectic
     time-marching method. This combination results in <u><b>high-order accurate</b></u>, fully
     discrete methods which can <u><b>preserve the invariants of the Hamiltonian</b></u> defining
-    the ODE system. The following figure shows an example with electromagnetics waves propagating in a non-homogeneous medium.
+    the ODE system. The following figure shows an example with electromagnetic waves propagating in a non-homogeneous medium.
     It shows that our SHFEM method conserves the energy of the semidiscretization in space up to 10 digits of precision,
     and does not allow the exact energy to drift in time. </p>
     <img src="symp_max.png" alt="SHFEM - core ideas" width="700">
@@ -132,15 +127,15 @@
     <p>
     Despite the many advantages of HDG methods, their analysis was also separated into two groups: for those more alike mixed methods, they were analyzed similar
     to the classical analysis of mixed methods, by the so-called projection-based analysis; on
-    the other hands, for those more alike nonconforming/DG methods, they were analyzed by
-    ad-hoc approaches. This separation of analysis has several undesired consequences:
-    (1) Those ad-hoc analysis is not as concise and simple as the projection-based analysis,
-    (2) Ad-hoc analysis becomes difficult for complicated problems (e.g., time-dependent problems, coupling problems),
+    the other hand, for those more alike nonconforming/DG methods, they were analyzed by
+    ad hoc approaches. This separation of analysis has several undesired consequences:
+    (1) Those ad hoc analyses are not as concise and simple as the projection-based analysis,
+    (2) Ad hoc analysis becomes difficult for complicated problems (e.g., time-dependent problems, coupling problems),
     (3) Analysis is hard to reuse because of the separation.
     </p>
     <p>
     To address this issue, we developed the so-called generalized projection-based analysis,
-    extending the classical projection-based analysis to those HDG method which do not admit
+    extending the classical projection-based analysis to those HDG methods that do not admit
     M-decomposition (e.g. Lehrenfeld-Schoberl HDG), thus enabling a <u><b>unified analysis</b></u>. With these new analysis tools,
     we are able to <u>devise/analyze new HDG methods</u> or <u>improve the analysis of existing ones</u>.
     The applications include time-harmonic and transient
