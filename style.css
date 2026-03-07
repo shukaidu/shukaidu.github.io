@@ -5,6 +5,10 @@ body {
   line-height: 1.3;
 }
 
+p {
+  line-height: 1.5;
+}
+
 .topnav {
   top: 0;
   width:100%;
@@ -36,6 +40,7 @@ body {
   margin-right: auto;
   max-width: 900px;
   padding: 0 5%;
+  padding-top: 24px;
 }
 
 header {
@@ -54,9 +59,32 @@ footer {
   gap: 20px;
 }
 
+.column-photo {
+  margin-top: 21px;
+  text-align: center;
+}
+
 img {
   max-width: 100%;
   height: auto;
+}
+
+figure {
+  margin: 16px 0;
+}
+
+figcaption {
+  font-size: 14px;
+  color: #555;
+  margin-top: 6px;
+}
+
+footer p {
+  font-size: 13px;
+  color: #aaa;
+  text-align: right;
+  margin: 0;
+  padding: 24px 0 10px;
 }
 
 @media screen and (max-width: 600px) {
@@ -69,5 +97,10 @@ img {
   }
   .row {
     flex-direction: column;
+  }
+  .column-photo {
+    order: -1;
+    text-align: center;
+    margin-top: 0;
   }
 }
