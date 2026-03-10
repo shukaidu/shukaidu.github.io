@@ -62,7 +62,7 @@ footer {
   text-align: right;
 }
 
-.main h2 {
+.main h2:not(.name-heading) {
   border-bottom: 1px solid #dde4ec;
   padding-bottom: 6px;
 }
