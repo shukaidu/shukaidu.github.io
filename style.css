@@ -112,6 +112,11 @@ footer p {
   margin-right: 6px;
 }
 
+.no-bullet {
+  list-style-type: none;
+  padding-left: 0;
+}
+
 .keywords {
   display: flex;
   flex-wrap: wrap;

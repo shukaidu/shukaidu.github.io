@@ -4,7 +4,7 @@
 
 ## 概览
 
-这是杜书恺的学术个人网站，通过 GitHub Pages 托管于 `shukaidu.github.io`。这是一个静态网站，无构建系统、无依赖项、无 JavaScript——仅使用纯 HTML 和 CSS。
+这是杜书楷的学术个人网站，通过 GitHub Pages 托管于 `shukaidu.github.io`。这是一个静态网站，无构建系统、无依赖项、无 JavaScript——仅使用纯 HTML 和 CSS。
 
 ## 文件结构
 
