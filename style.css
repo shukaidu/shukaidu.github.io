@@ -149,11 +149,166 @@ footer p {
   border-radius: 6px;
   font-size: 15px;
   transition: background-color 0.2s;
+  cursor: pointer;
+  border: 0;
 }
 
 .btn:hover {
   background-color: #1a4068;
   color: white;
+}
+
+.others-hero {
+  padding: 22px 24px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #eef4fb 0%, #f8fbfd 55%, #fff4df 100%);
+  border: 1px solid #d9e6f2;
+  box-shadow: 0 10px 25px rgba(30, 45, 64, 0.08);
+}
+
+.game-panel {
+  margin-top: 24px;
+  padding: 22px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(251, 253, 255, 0.98) 100%);
+  border: 1px solid #dde4ec;
+  box-shadow: 0 18px 38px rgba(30, 45, 64, 0.1);
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.game-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  min-width: 100px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f4f8fd 0%, #eef4fb 100%);
+  color: #1e2d40;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #587089;
+}
+
+.stat-value {
+  display: block;
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.wave-stage {
+  position: relative;
+  margin: 22px 0 18px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), rgba(242, 247, 255, 0.94));
+  border: 1px solid rgba(189, 203, 220, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 14px 30px rgba(41, 72, 105, 0.1);
+}
+
+.wave-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.wave-overlay {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  pointer-events: none;
+}
+
+.wave-overlay span {
+  display: inline-block;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.86);
+  color: #46607b;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 20px rgba(39, 60, 88, 0.08);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.game-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.message-box {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background-color: #f7fafc;
+  border: 1px solid #dde4ec;
+}
+
+.legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #506375;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border-radius: 4px;
+  vertical-align: -2px;
+}
+
+.swatch-plane {
+  background: linear-gradient(180deg, #7eb7ff 0%, #2d67be 100%);
+}
+
+.swatch-scatter {
+  background: linear-gradient(90deg, #5d86e8 0%, #ffe6ee 50%, #f08aa8 100%);
+}
+
+.swatch-obstacle {
+  background: linear-gradient(180deg, #6b7280 0%, #4c5664 100%);
+}
+
+.scatter-stage {
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.94), rgba(243, 247, 255, 0.96));
+}
+
+.scatter-canvas {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.stat-value-small {
+  font-size: 18px;
 }
 
 @media screen and (max-width: 600px) {
@@ -171,5 +326,16 @@ footer p {
     order: -1;
     text-align: center;
     margin-top: 0;
+  }
+  .game-panel,
+  .others-hero {
+    padding: 18px;
+  }
+  .wave-stage {
+    border-radius: 18px;
+  }
+  .wave-overlay {
+    top: 10px;
+    left: 10px;
   }
 }

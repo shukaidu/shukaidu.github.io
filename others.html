@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="description" content="Other interests and an interactive wave scattering demo on Shukai Du's website.">
+  <title>Others | Shukai Du</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="topnav" aria-label="Main navigation">
+    <a href="index.html">Home</a>
+    <a href="research.html">Research</a>
+    <a href="publications.html">Publications</a>
+    <a href="teach.html">Teaching</a>
+    <a href="contact.html">Contact</a>
+    <a class="active" href="others.html">Others</a>
+  </nav>
+
+  <div class="main">
+
+    <header>
+      <h1>Others</h1>
+    </header>
+
+    <section class="others-hero">
+      <h2>Wave Scattering Sketchbook</h2>
+      <p>Draw a solid obstacle with your mouse or finger, then launch a left-to-right plane wave and watch the scattering pattern unfold.</p>
+      <p>This is an interactive visual experiment rather than a scored game.</p>
+    </section>
+
+    <section class="game-panel" aria-labelledby="game-title">
+      <div class="game-header">
+        <div>
+          <h2 id="game-title">Plane wave meets your shape</h2>
+          <p>Sketch a solid body directly on the field, press <strong>Start</strong>, then pause or clear whenever you want to try a new geometry.</p>
+        </div>
+        <div class="game-stats" aria-label="Simulation status">
+          <div class="stat-card">
+            <span class="stat-label">Mode</span>
+            <span class="stat-value stat-value-small" id="sim-mode">Drawing</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Input</span>
+            <span class="stat-value stat-value-small" id="input-mode">Mouse / Touch</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Wave</span>
+            <span class="stat-value stat-value-small" id="wave-status">Idle</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend" aria-hidden="true">
+        <span><span class="legend-swatch swatch-plane"></span>incoming plane wave</span>
+        <span><span class="legend-swatch swatch-scatter"></span>positive / negative phase</span>
+        <span><span class="legend-swatch swatch-obstacle"></span>solid obstacle</span>
+      </div>
+
+      <div class="wave-stage scatter-stage">
+        <canvas id="scatter-canvas" class="wave-canvas scatter-canvas" width="760" height="456" aria-label="Wave scattering field"></canvas>
+        <div class="wave-overlay">
+          <span id="wave-hint">Draw first, then press Start.</span>
+        </div>
+      </div>
+
+      <div class="game-actions">
+        <button class="btn" id="start-button" type="button">Start</button>
+        <button class="btn" id="pause-button" type="button" disabled>Pause</button>
+        <button class="btn" id="clear-button" type="button">Clear</button>
+      </div>
+
+      <div class="message-box" id="game-message" aria-live="polite">
+        Draw directly on the field to create a solid obstacle. The incoming wave will travel from left to right after you start the simulation.
+      </div>
+    </section>
+
+    <footer><p>&copy; 2026 Shukai Du</p></footer>
+
+  </div>
+
+  <script>
+    (function () {
+      var canvas = document.getElementById('scatter-canvas');
+      var context = canvas.getContext('2d');
+      var message = document.getElementById('game-message');
+      var hint = document.getElementById('wave-hint');
+      var simModeEl = document.getElementById('sim-mode');
+      var inputModeEl = document.getElementById('input-mode');
+      var waveStatusEl = document.getElementById('wave-status');
+      var startButton = document.getElementById('start-button');
+      var pauseButton = document.getElementById('pause-button');
+      var clearButton = document.getElementById('clear-button');
+
+      var gridWidth = 152;
+      var gridHeight = 92;
+      var brushRadius = 4;
+      var damping = 0.996;
+      var boundaryDamping = 0.92;
+      var frequency = 0.18;
+      var sourceAmplitude = 0.95;
+
+      var currentField = new Float32Array(gridWidth * gridHeight);
+      var previousField = new Float32Array(gridWidth * gridHeight);
+      var nextField = new Float32Array(gridWidth * gridHeight);
+      var obstacleMask = new Uint8Array(gridWidth * gridHeight);
+
+      var displayWidth = 760;
+      var displayHeight = 456;
+      var cellWidth = displayWidth / gridWidth;
+      var cellHeight = displayHeight / gridHeight;
+
+      var animationHandle = 0;
+      var isDrawing = false;
+      var isRunning = false;
+      var isPaused = false;
+      var pointerInside = false;
+      var activePointerId = null;
+      var stepCount = 0;
+
+      function resizeCanvas() {
+        var width = Math.min(760, canvas.parentElement.clientWidth);
+        var height = Math.round(width * 0.6);
+        displayWidth = width;
+        displayHeight = height;
+        canvas.width = width;
+        canvas.height = height;
+        cellWidth = displayWidth / gridWidth;
+        cellHeight = displayHeight / gridHeight;
+      }
+
+      function indexFor(x, y) {
+        return y * gridWidth + x;
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function setMessage(text) {
+        message.textContent = text;
+      }
+
+      function updateLabels() {
+        if (isRunning) {
+          simModeEl.textContent = 'Running';
+          waveStatusEl.textContent = 'Active';
+        } else if (isPaused) {
+          simModeEl.textContent = 'Paused';
+          waveStatusEl.textContent = 'Held';
+        } else {
+          simModeEl.textContent = 'Drawing';
+          waveStatusEl.textContent = 'Idle';
+        }
+      }
+
+      function setButtons() {
+        startButton.disabled = isRunning;
+        pauseButton.disabled = !isRunning && !isPaused;
+      }
+
+      function resetFields() {
+        currentField.fill(0);
+        previousField.fill(0);
+        nextField.fill(0);
+        stepCount = 0;
+      }
+
+      function clearAll() {
+        isRunning = false;
+        isPaused = false;
+        isDrawing = false;
+        activePointerId = null;
+        obstacleMask.fill(0);
+        resetFields();
+        updateLabels();
+        setButtons();
+        hint.textContent = 'Draw first, then press Start.';
+        setMessage('Draw directly on the field to create a solid obstacle. The incoming wave will travel from left to right after you start the simulation.');
+        render();
+      }
+
+      function pointerPosition(event) {
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: clamp((event.clientX - rect.left) * (canvas.width / rect.width), 0, canvas.width - 1),
+          y: clamp((event.clientY - rect.top) * (canvas.height / rect.height), 0, canvas.height - 1)
+        };
+      }
+
+      function gridPosition(position) {
+        return {
+          x: clamp(Math.floor(position.x / cellWidth), 0, gridWidth - 1),
+          y: clamp(Math.floor(position.y / cellHeight), 0, gridHeight - 1)
+        };
+      }
+
+      function paintAt(gridX, gridY) {
+        for (var y = gridY - brushRadius; y <= gridY + brushRadius; y += 1) {
+          if (y < 0 || y >= gridHeight) {
+            continue;
+          }
+          for (var x = gridX - brushRadius; x <= gridX + brushRadius; x += 1) {
+            if (x < 0 || x >= gridWidth) {
+              continue;
+            }
+            var dx = x - gridX;
+            var dy = y - gridY;
+            if (dx * dx + dy * dy <= brushRadius * brushRadius) {
+              obstacleMask[indexFor(x, y)] = 1;
+            }
+          }
+        }
+      }
+
+      function linePaint(fromPoint, toPoint) {
+        var dx = toPoint.x - fromPoint.x;
+        var dy = toPoint.y - fromPoint.y;
+        var steps = Math.max(Math.abs(dx), Math.abs(dy), 1);
+        for (var i = 0; i <= steps; i += 1) {
+          var t = i / steps;
+          var gx = Math.round(fromPoint.x + dx * t);
+          var gy = Math.round(fromPoint.y + dy * t);
+          paintAt(gx, gy);
+        }
+      }
+
+      var lastGridPoint = null;
+
+      function beginDrawing(event) {
+        if (isRunning || isPaused) {
+          return;
+        }
+        event.preventDefault();
+        activePointerId = event.pointerId;
+        isDrawing = true;
+        pointerInside = true;
+        inputModeEl.textContent = event.pointerType === 'touch' ? 'Touch' : 'Mouse';
+        var point = gridPosition(pointerPosition(event));
+        lastGridPoint = point;
+        paintAt(point.x, point.y);
+        hint.textContent = 'Drawing obstacle...';
+        setMessage('Release to finish sketching, or keep drawing to build a thicker scatterer.');
+        render();
+        canvas.setPointerCapture(event.pointerId);
+      }
+
+      function moveDrawing(event) {
+        if (!isDrawing || event.pointerId !== activePointerId || isRunning || isPaused) {
+          return;
+        }
+        event.preventDefault();
+        var point = gridPosition(pointerPosition(event));
+        linePaint(lastGridPoint, point);
+        lastGridPoint = point;
+        render();
+      }
+
+      function endDrawing(event) {
+        if (!isDrawing || event.pointerId !== activePointerId) {
+          return;
+        }
+        event.preventDefault();
+        isDrawing = false;
+        activePointerId = null;
+        lastGridPoint = null;
+        hint.textContent = 'Press Start to launch the plane wave.';
+        setMessage('Obstacle ready. Press Start to send a monochromatic plane wave from left to right.');
+        if (canvas.hasPointerCapture(event.pointerId)) {
+          canvas.releasePointerCapture(event.pointerId);
+        }
+      }
+
+      function applySource(step) {
+        var phase = Math.sin(step * frequency) * sourceAmplitude;
+        for (var y = 2; y < gridHeight - 2; y += 1) {
+          var index = indexFor(1, y);
+          if (!obstacleMask[index]) {
+            currentField[index] = phase;
+            previousField[index] = phase;
+          }
+        }
+      }
+
+      function stepSimulation() {
+        var x;
+        var y;
+        var idx;
+        for (y = 1; y < gridHeight - 1; y += 1) {
+          for (x = 1; x < gridWidth - 1; x += 1) {
+            idx = indexFor(x, y);
+            if (obstacleMask[idx]) {
+              nextField[idx] = 0;
+              continue;
+            }
+
+            var laplacian =
+              currentField[indexFor(x - 1, y)] +
+              currentField[indexFor(x + 1, y)] +
+              currentField[indexFor(x, y - 1)] +
+              currentField[indexFor(x, y + 1)] -
+              4 * currentField[idx];
+
+            var value = (2 * currentField[idx] - previousField[idx] + 0.22 * laplacian) * damping;
+            if (x === gridWidth - 2 || y === 1 || y === gridHeight - 2) {
+              value *= boundaryDamping;
+            }
+            nextField[idx] = value;
+          }
+        }
+
+        for (x = 0; x < gridWidth; x += 1) {
+          nextField[indexFor(x, 0)] = 0;
+          nextField[indexFor(x, gridHeight - 1)] = 0;
+        }
+        for (y = 0; y < gridHeight; y += 1) {
+          nextField[indexFor(gridWidth - 1, y)] = nextField[indexFor(gridWidth - 2, y)] * 0.985;
+          nextField[indexFor(0, y)] = nextField[indexFor(1, y)] * 0.98;
+        }
+
+        var swap = previousField;
+        previousField = currentField;
+        currentField = nextField;
+        nextField = swap;
+        applySource(stepCount);
+        stepCount += 1;
+      }
+
+      function fieldColor(value) {
+        var normalized = clamp((value + 1.1) / 2.2, 0, 1);
+        var red = Math.round(84 + normalized * 166);
+        var green = Math.round(110 + (1 - Math.abs(normalized - 0.5) * 2) * 74);
+        var blue = Math.round(204 + (1 - normalized) * 38);
+        return [red, green, blue];
+      }
+
+      function drawBackground() {
+        var gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#eef4ff');
+        gradient.addColorStop(0.52, '#fdf7ff');
+        gradient.addColorStop(1, '#fff7ef');
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.strokeStyle = 'rgba(79, 99, 124, 0.08)';
+        context.lineWidth = 1;
+        var stepX = canvas.width / 12;
+        var stepY = canvas.height / 8;
+        for (var x = stepX; x < canvas.width; x += stepX) {
+          context.beginPath();
+          context.moveTo(x, 0);
+          context.lineTo(x, canvas.height);
+          context.stroke();
+        }
+        for (var y = stepY; y < canvas.height; y += stepY) {
+          context.beginPath();
+          context.moveTo(0, y);
+          context.lineTo(canvas.width, y);
+          context.stroke();
+        }
+      }
+
+      function drawField() {
+        var image = context.createImageData(canvas.width, canvas.height);
+        var data = image.data;
+        var gx;
+        var gy;
+        var px;
+        var py;
+        var idx;
+        var offset;
+        for (gy = 0; gy < gridHeight; gy += 1) {
+          for (gx = 0; gx < gridWidth; gx += 1) {
+            idx = indexFor(gx, gy);
+            var left = Math.floor(gx * cellWidth);
+            var right = Math.max(left + 1, Math.floor((gx + 1) * cellWidth));
+            var top = Math.floor(gy * cellHeight);
+            var bottom = Math.max(top + 1, Math.floor((gy + 1) * cellHeight));
+            var color;
+            if (obstacleMask[idx]) {
+              color = [76, 86, 100];
+            } else {
+              color = fieldColor(currentField[idx]);
+            }
+
+            for (py = top; py < bottom && py < canvas.height; py += 1) {
+              for (px = left; px < right && px < canvas.width; px += 1) {
+                offset = (py * canvas.width + px) * 4;
+                data[offset] = color[0];
+                data[offset + 1] = color[1];
+                data[offset + 2] = color[2];
+                data[offset + 3] = obstacleMask[idx] ? 255 : 210;
+              }
+            }
+          }
+        }
+        context.putImageData(image, 0, 0);
+      }
+
+      function drawIncomingArrow() {
+        context.save();
+        context.strokeStyle = 'rgba(45, 103, 190, 0.75)';
+        context.fillStyle = 'rgba(45, 103, 190, 0.75)';
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(18, canvas.height * 0.12);
+        context.lineTo(96, canvas.height * 0.12);
+        context.stroke();
+        context.beginPath();
+        context.moveTo(96, canvas.height * 0.12);
+        context.lineTo(84, canvas.height * 0.12 - 7);
+        context.lineTo(84, canvas.height * 0.12 + 7);
+        context.closePath();
+        context.fill();
+        context.font = '13px system-ui, sans-serif';
+        context.fillText('incoming wave', 18, canvas.height * 0.12 - 10);
+        context.restore();
+      }
+
+      function render() {
+        drawBackground();
+        drawField();
+        drawIncomingArrow();
+      }
+
+      function animate() {
+        if (!isRunning) {
+          return;
+        }
+        stepSimulation();
+        render();
+        animationHandle = window.requestAnimationFrame(animate);
+      }
+
+      function startSimulation() {
+        if (isRunning) {
+          return;
+        }
+        if (!isPaused) {
+          resetFields();
+        }
+        isRunning = true;
+        isPaused = false;
+        updateLabels();
+        setButtons();
+        hint.textContent = 'Plane wave running from left to right.';
+        setMessage('The field is evolving. Observe the reflection, shadow region, and diffraction around your shape.');
+        if (animationHandle) {
+          window.cancelAnimationFrame(animationHandle);
+        }
+        animationHandle = window.requestAnimationFrame(animate);
+      }
+
+      function pauseSimulation() {
+        if (!isRunning) {
+          return;
+        }
+        isRunning = false;
+        isPaused = true;
+        if (animationHandle) {
+          window.cancelAnimationFrame(animationHandle);
+          animationHandle = 0;
+        }
+        updateLabels();
+        setButtons();
+        hint.textContent = 'Simulation paused.';
+        setMessage('Paused. Press Start to continue from the current field, or Clear to sketch a new obstacle.');
+      }
+
+      function handleResize() {
+        resizeCanvas();
+        render();
+      }
+
+      canvas.addEventListener('pointerdown', beginDrawing);
+      canvas.addEventListener('pointermove', moveDrawing);
+      canvas.addEventListener('pointerup', endDrawing);
+      canvas.addEventListener('pointercancel', endDrawing);
+      canvas.addEventListener('pointerleave', function () {
+        pointerInside = false;
+      });
+      canvas.addEventListener('pointerenter', function () {
+        pointerInside = true;
+      });
+
+      startButton.addEventListener('click', startSimulation);
+      pauseButton.addEventListener('click', pauseSimulation);
+      clearButton.addEventListener('click', function () {
+        if (animationHandle) {
+          window.cancelAnimationFrame(animationHandle);
+          animationHandle = 0;
+        }
+        clearAll();
+      });
+      window.addEventListener('resize', handleResize);
+
+      resizeCanvas();
+      updateLabels();
+      setButtons();
+      render();
+    }());
+  </script>
+</body>
+</html>
