@@ -27,7 +27,6 @@
     <section class="others-hero">
       <h2>Wave Scattering Sketchbook</h2>
       <p>Draw a solid obstacle with your mouse or finger, then launch a left-to-right plane wave and watch the scattering pattern unfold.</p>
-      <p>This is an interactive visual experiment rather than a scored game.</p>
     </section>
 
     <section class="game-panel" aria-labelledby="game-title">
@@ -93,13 +92,16 @@
       var pauseButton = document.getElementById('pause-button');
       var clearButton = document.getElementById('clear-button');
 
-      var gridWidth = 152;
-      var gridHeight = 92;
-      var brushRadius = 4;
+      var visibleGridWidth = 228;
+      var pmlWidth = 60;
+      var gridWidth = visibleGridWidth + pmlWidth;
+      var gridHeight = 138;
+      var brushRadius = 5;
       var damping = 0.996;
       var boundaryDamping = 0.92;
-      var frequency = 0.18;
+      var frequency = 0.32;
       var sourceAmplitude = 0.95;
+      var rightAbsorption = new Float32Array(gridWidth);
 
       var currentField = new Float32Array(gridWidth * gridHeight);
       var previousField = new Float32Array(gridWidth * gridHeight);
@@ -108,7 +110,7 @@
 
       var displayWidth = 760;
       var displayHeight = 456;
-      var cellWidth = displayWidth / gridWidth;
+      var cellWidth = displayWidth / visibleGridWidth;
       var cellHeight = displayHeight / gridHeight;
 
       var animationHandle = 0;
@@ -126,8 +128,19 @@
         displayHeight = height;
         canvas.width = width;
         canvas.height = height;
-        cellWidth = displayWidth / gridWidth;
+        cellWidth = displayWidth / visibleGridWidth;
         cellHeight = displayHeight / gridHeight;
+      }
+
+      function buildAbsorbingLayer() {
+        for (var x = 0; x < gridWidth; x += 1) {
+          if (x < visibleGridWidth) {
+            rightAbsorption[x] = 1;
+          } else {
+            var t = (x - visibleGridWidth + 1) / pmlWidth;
+            rightAbsorption[x] = Math.max(0.72, 1 - 0.24 * t * t);
+          }
+        }
       }
 
       function indexFor(x, y) {
@@ -191,7 +204,7 @@
 
       function gridPosition(position) {
         return {
-          x: clamp(Math.floor(position.x / cellWidth), 0, gridWidth - 1),
+          x: clamp(Math.floor(position.x / cellWidth), 0, visibleGridWidth - 1),
           y: clamp(Math.floor(position.y / cellHeight), 0, gridHeight - 1)
         };
       }
@@ -202,7 +215,7 @@
             continue;
           }
           for (var x = gridX - brushRadius; x <= gridX + brushRadius; x += 1) {
-            if (x < 0 || x >= gridWidth) {
+            if (x < 0 || x >= visibleGridWidth) {
               continue;
             }
             var dx = x - gridX;
@@ -306,6 +319,7 @@
             if (x === gridWidth - 2 || y === 1 || y === gridHeight - 2) {
               value *= boundaryDamping;
             }
+            value *= rightAbsorption[x];
             nextField[idx] = value;
           }
         }
@@ -371,7 +385,7 @@
         var idx;
         var offset;
         for (gy = 0; gy < gridHeight; gy += 1) {
-          for (gx = 0; gx < gridWidth; gx += 1) {
+          for (gx = 0; gx < visibleGridWidth; gx += 1) {
             idx = indexFor(gx, gy);
             var left = Math.floor(gx * cellWidth);
             var right = Math.max(left + 1, Math.floor((gx + 1) * cellWidth));
@@ -496,6 +510,7 @@
       window.addEventListener('resize', handleResize);
 
       resizeCanvas();
+      buildAbsorbingLayer();
       updateLabels();
       setButtons();
       render();
