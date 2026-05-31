@@ -123,6 +123,15 @@ footer p {
   padding-left: 16px;
 }
 
+.news-scroll li {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f4f8;
+}
+
+.news-scroll li:last-child {
+  border-bottom: none;
+}
+
 .no-bullet {
   list-style-type: none;
   padding-left: 0;
