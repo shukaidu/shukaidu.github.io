@@ -112,6 +112,17 @@ footer p {
   margin-right: 6px;
 }
 
+.news-scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #dde4ec;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background-color: #fff;
+  list-style: none;
+  padding-left: 16px;
+}
+
 .no-bullet {
   list-style-type: none;
   padding-left: 0;
