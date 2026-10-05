@@ -37,12 +37,14 @@ conda env create -f environment.yml
 conda activate homepage
 ```
 
-AI 助手的 shell 里 `conda` 不在 PATH 上，无法 activate（且 `python3` 指向 Microsoft Store 的占位程序），改用 `~/miniforge3/Scripts/conda.exe run -n homepage <命令>`。
+不方便 `conda activate` 时（例如 AI 助手的非交互式 shell），在命令前加 `conda run -n homepage`，不要直接调用系统自带的 `python` 或 `python3`。下文的命令都按这种写法给出。
+
+`.claude/launch.json` 也通过 `conda run` 启动预览，因此要求 `conda` 是 PATH 上的可执行文件，而不只是 shell 里的函数。若某个工具报找不到 `conda`，把 conda 安装目录下的 `condabin` 加入系统 PATH。
 
 ## 本地预览
 
 ```
-python -m http.server 8765
+conda run -n homepage python -m http.server 8765
 ```
 
 在仓库根目录运行，然后打开 http://localhost:8765/（与 `.claude/launch.json` 的端口一致）。
@@ -52,7 +54,7 @@ python -m http.server 8765
 CV 源文件位于 `CV/CV.tex`。在 `CV/` 目录中编译：
 
 ```
-cd CV && tectonic CV.tex
+cd CV && conda run -n homepage tectonic CV.tex
 ```
 
 Tectonic 版本已锁定（0.17），它会自动下载对应版本的 LaTeX 宏包，所以各机器编出的 PDF 一致。
