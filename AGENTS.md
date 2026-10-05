@@ -39,7 +39,9 @@ conda activate homepage
 
 不方便 `conda activate` 时（例如 AI 助手的非交互式 shell），在命令前加 `conda run -n homepage`，不要直接调用系统自带的 `python` 或 `python3`。下文的命令都按这种写法给出。
 
-`.claude/launch.json` 也通过 `conda run` 启动预览，因此要求 `conda` 是 PATH 上的可执行文件，而不只是 shell 里的函数。若某个工具报找不到 `conda`，把 conda 安装目录下的 `condabin` 加入系统 PATH。
+`.claude/launch.json` 也通过 `conda run` 启动预览，因此要求 `conda` 是 PATH 上的可执行文件，而不只是 shell 里的函数。
+
+如果 `conda` 或 `conda run` 报错（包括找不到 `conda`），立即停止，把完整命令和报错展示给用户，等用户决定；不要按绝对路径调用 conda，也不要去文件系统里翻找 conda 的安装位置。
 
 ## 本地预览
 
