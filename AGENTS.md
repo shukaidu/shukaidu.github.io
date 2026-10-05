@@ -20,6 +20,7 @@
 - `favicon.svg` — 网站图标，各页面通过 `<link rel="icon">` 引用
 - `CV/CV.tex` — 简历源文件（编译为 `CV/CV.pdf`，从 index.html 链接）；`CV/res.cls` 为其使用的文档类
 - `*.png`, `*.jpg` — 研究图片和个人照片，直接在 HTML 中引用
+- `environment.yml` — 本项目的 conda 环境 `homepage`（见「环境」）
 
 所有页面共用同一导航栏（`nav.topnav`）和内容容器（`div.main`）。当前页面的导航链接标有 `class="active"`。
 
@@ -27,29 +28,34 @@
 
 推送到 `master` 分支的更改会通过 GitHub Pages 自动发布。无需构建步骤——直接编辑 HTML/CSS 文件即可。
 
+## 环境
+
+本项目用专属的 conda 环境 `homepage`（conda-forge），由根目录的 `environment.yml` 定义，含 Python（本地预览）和 Tectonic（CV 编译）。不要装进 base 或其他环境。新机器上：
+
+```
+conda env create -f environment.yml
+conda activate homepage
+```
+
+AI 助手的 shell 里 `conda` 不在 PATH 上，无法 activate（且 `python3` 指向 Microsoft Store 的占位程序），改用 `~/miniforge3/Scripts/conda.exe run -n homepage <命令>`。
+
 ## 本地预览
 
 ```
-conda activate daily
 python -m http.server 8765
 ```
 
-在仓库根目录运行，然后打开 http://localhost:8765/（与 `.claude/launch.json` 的端口一致）。`http.server` 是标准库，任何 Python 环境都行。
-
-AI 助手的 shell 里 `conda` 不在 PATH 上，且 `python3` 指向 Microsoft Store 的占位程序，改用：`~/miniforge3/envs/daily/python.exe -m http.server 8765`。
+在仓库根目录运行，然后打开 http://localhost:8765/（与 `.claude/launch.json` 的端口一致）。
 
 ## CV 编译
 
 CV 源文件位于 `CV/CV.tex`。在 `CV/` 目录中编译：
 
 ```
-conda activate talk-slides
 cd CV && tectonic CV.tex
 ```
 
-AI 助手的 shell 里 `conda` 不在 PATH 上，无法 activate，改用：`cd CV && ~/miniforge3/Scripts/conda.exe run -n talk-slides tectonic CV.tex`。
-
-Tectonic 用 Miniforge 的 `talk-slides` 环境（conda-forge），不要新建环境，也不要装进 base。`CV/environment.yml` 与 `talk_slides/environment.yml` 内容一致，在新机器上用 `conda env create -f CV/environment.yml` 即可建出同一环境。Tectonic 版本已锁定（0.17），它会自动下载对应版本的 LaTeX 宏包。
+Tectonic 版本已锁定（0.17），它会自动下载对应版本的 LaTeX 宏包，所以各机器编出的 PDF 一致。
 
 ## 约定
 

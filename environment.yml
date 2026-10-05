@@ -1,0 +1,13 @@
+# One env for this repo: local preview (python -m http.server) and the CV build (tectonic).
+#
+#   conda env create -f environment.yml && conda activate homepage
+#
+# Tectonic downloads the LaTeX packages it needs on first run; pinning its version
+# also pins that package bundle, so CV.pdf comes out the same on every machine.
+name: homepage
+channels:
+  - conda-forge
+  - nodefaults            # skip Anaconda default channels
+dependencies:
+  - python=3.13
+  - tectonic=0.17.*

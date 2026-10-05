@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "site",
-      "runtimeExecutable": "C:/Users/dushu/miniforge3/envs/daily/python.exe",
+      "runtimeExecutable": "C:/Users/dushu/miniforge3/envs/homepage/python.exe",
       "runtimeArgs": ["-m", "http.server", "8765"],
       "port": 8765
     }
