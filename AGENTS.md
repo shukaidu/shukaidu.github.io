@@ -15,7 +15,7 @@
 - `others.html` — 其他兴趣，含交互式波散射演示（内联 JavaScript）
 - `contact.html` — 联系方式页面
 - `mat684/` — MAT684 课程页（`index.html`，用 `../` 相对路径引用样式表和图标）及讲义 PDF
-- `movie/element_learning_explainer_en.mp4` — element learning 讲解视频，由 `research.html` 嵌入
+- `movie/element_learning_explainer_en.mp4` — element learning 讲解视频，由 `research.html` 嵌入；`movie/element_learning_explainer_poster.jpg` 为其封面（poster）
 - `style.css` — 所有页面共用的样式表
 - `favicon.svg` — 网站图标，各页面通过 `<link rel="icon">` 引用
 - `CV/CV.tex` — 简历源文件（编译为 `CV/CV.pdf`，从 index.html 链接）；`CV/res.cls` 为其使用的文档类

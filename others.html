@@ -1,12 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Other interests and an interactive wave scattering demo on Shukai Du's website.">
   <title>Others | Shukai Du</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=20260930">
+  <link rel="stylesheet" href="style.css?v=20261012">
+  <style>
+    /* Demo-specific legend; the field gradient matches the color map in the script below. */
+    .legend .swatch-field {
+      width: 36px;
+      background: linear-gradient(90deg, #3a6bd4 0%, #f6f5fa 50%, #df5486 100%);
+    }
+    .legend .legend-arrow {
+      display: inline-block;
+      margin-right: 6px;
+      color: #24569f;
+      font-weight: 700;
+    }
+  </style>
 </head>
 <body>
   <nav class="topnav" aria-label="Main navigation">
@@ -52,13 +65,15 @@
       </div>
 
       <div class="legend" aria-hidden="true">
-        <span><span class="legend-swatch swatch-plane"></span>incoming plane wave</span>
-        <span><span class="legend-swatch swatch-scatter"></span>positive / negative phase</span>
+        <span><span class="legend-arrow">&rarr;</span>incoming plane wave</span>
+        <span><span class="legend-swatch swatch-field"></span>field amplitude &minus; / +</span>
         <span><span class="legend-swatch swatch-obstacle"></span>solid obstacle</span>
       </div>
 
       <div class="wave-stage scatter-stage">
-        <canvas id="scatter-canvas" class="wave-canvas scatter-canvas" width="760" height="456" aria-label="Wave scattering field"></canvas>
+        <canvas id="scatter-canvas" class="wave-canvas scatter-canvas" width="760" height="456" role="img" aria-label="Wave scattering field: draw an obstacle, then start a plane wave">
+          Interactive wave scattering demo. It needs a browser with canvas and JavaScript support.
+        </canvas>
         <div class="wave-overlay">
           <span id="wave-hint">Draw first, then press Start.</span>
         </div>
@@ -81,8 +96,19 @@
 
   <script>
     (function () {
+      'use strict';
+
       var canvas = document.getElementById('scatter-canvas');
+      if (!canvas || !canvas.getContext) {
+        return;
+      }
       var context = canvas.getContext('2d');
+      var fieldCanvas = document.createElement('canvas');
+      var fieldContext = fieldCanvas.getContext('2d');
+      if (!context || !fieldContext) {
+        return;
+      }
+      var stage = canvas.parentElement;
       var message = document.getElementById('game-message');
       var hint = document.getElementById('wave-hint');
       var simModeEl = document.getElementById('sim-mode');
@@ -92,63 +118,130 @@
       var pauseButton = document.getElementById('pause-button');
       var clearButton = document.getElementById('clear-button');
 
+      // The visible field is the interior of a larger grid; the margin is an absorbing sponge.
       var visibleGridWidth = 228;
-      var pmlWidth = 60;
-      var gridWidth = visibleGridWidth + pmlWidth;
-      var gridHeight = 138;
+      var visibleGridHeight = 138;
+      var spongeWidth = 40;
+      var gridWidth = visibleGridWidth + 2 * spongeWidth;
+      var gridHeight = visibleGridHeight + 2 * spongeWidth;
+      var interiorLeft = spongeWidth;
+      var interiorRight = spongeWidth + visibleGridWidth - 1;
+      var interiorTop = spongeWidth;
+      var interiorBottom = spongeWidth + visibleGridHeight - 1;
+
       var brushRadius = 5;
-      var damping = 0.996;
-      var boundaryDamping = 0.92;
+      var brushMargin = 2;
+      var waveSpeed2 = 0.22;
+      var spongeStrength = 0.1;
       var frequency = 0.32;
       var sourceAmplitude = 0.95;
-      var rightAbsorption = new Float32Array(gridWidth);
+      var sourceRampSteps = 60;
+      var colorRange = 1.3;
+      var stepsPerSecond = 60;
+      var maxStepsPerFrame = 4;
 
       var currentField = new Float32Array(gridWidth * gridHeight);
       var previousField = new Float32Array(gridWidth * gridHeight);
       var nextField = new Float32Array(gridWidth * gridHeight);
       var obstacleMask = new Uint8Array(gridWidth * gridHeight);
+      var spongeGain = new Float32Array(gridWidth * gridHeight);
+      var spongeLoss = new Float32Array(gridWidth * gridHeight);
 
-      var displayWidth = 760;
-      var displayHeight = 456;
-      var cellWidth = displayWidth / visibleGridWidth;
-      var cellHeight = displayHeight / gridHeight;
+      // The incoming plane wave is computed on a 1D grid with the same stencil and injected
+      // along the edge of the visible region (total-field / scattered-field), so the sponge
+      // only ever sees the scattered wave.
+      var incidentLead = 4;
+      var incidentSponge = 60;
+      var incidentLength = incidentLead + visibleGridWidth + 2 + incidentSponge;
+      var incidentCurrent = new Float32Array(incidentLength);
+      var incidentPrevious = new Float32Array(incidentLength);
+      var incidentNext = new Float32Array(incidentLength);
+      var incidentGain = new Float32Array(incidentLength);
+      var incidentLoss = new Float32Array(incidentLength);
+
+      var fieldImage = fieldContext.createImageData(visibleGridWidth, visibleGridHeight);
+      var colorTable = new Uint8Array(256 * 3);
+      var obstacleColor = [86, 96, 110];
+
+      var displayWidth = 0;
+      var displayHeight = 0;
+      var pixelRatio = 1;
+      var cellWidth = 1;
+      var cellHeight = 1;
 
       var animationHandle = 0;
+      var lastTimestamp = null;
+      var stepBudget = 0;
       var isDrawing = false;
       var isRunning = false;
       var isPaused = false;
-      var pointerInside = false;
+      var isOnScreen = true;
       var activePointerId = null;
       var stepCount = 0;
 
-      function resizeCanvas() {
-        var width = Math.min(760, canvas.parentElement.clientWidth);
-        var height = Math.round(width * 0.6);
-        displayWidth = width;
-        displayHeight = height;
-        canvas.width = width;
-        canvas.height = height;
-        cellWidth = displayWidth / visibleGridWidth;
-        cellHeight = displayHeight / gridHeight;
-      }
+      fieldCanvas.width = visibleGridWidth;
+      fieldCanvas.height = visibleGridHeight;
 
-      function buildAbsorbingLayer() {
-        for (var x = 0; x < gridWidth; x += 1) {
-          if (x < visibleGridWidth) {
-            rightAbsorption[x] = 1;
-          } else {
-            var t = (x - visibleGridWidth + 1) / pmlWidth;
-            rightAbsorption[x] = Math.max(0.72, 1 - 0.24 * t * t);
-          }
-        }
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
       }
 
       function indexFor(x, y) {
         return y * gridWidth + x;
       }
 
-      function clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
+      function resizeCanvas() {
+        var width = Math.floor(stage.clientWidth);
+        var ratio = window.devicePixelRatio || 1;
+        if (width <= 0 || (width === displayWidth && ratio === pixelRatio)) {
+          return false;
+        }
+        displayWidth = width;
+        displayHeight = Math.round(width * 0.6);
+        pixelRatio = ratio;
+        canvas.width = Math.round(displayWidth * pixelRatio);
+        canvas.height = Math.round(displayHeight * pixelRatio);
+        canvas.style.height = displayHeight + 'px';
+        cellWidth = displayWidth / visibleGridWidth;
+        cellHeight = displayHeight / visibleGridHeight;
+        return true;
+      }
+
+      function buildAbsorbingLayers() {
+        var x;
+        var y;
+        var i;
+        for (y = 0; y < gridHeight; y += 1) {
+          var ty = Math.max(interiorTop - y, y - interiorBottom, 0) / spongeWidth;
+          for (x = 0; x < gridWidth; x += 1) {
+            var tx = Math.max(interiorLeft - x, x - interiorRight, 0) / spongeWidth;
+            var sigma = spongeStrength * (tx * tx + ty * ty);
+            spongeGain[indexFor(x, y)] = 1 / (1 + sigma);
+            spongeLoss[indexFor(x, y)] = 1 - sigma;
+          }
+        }
+        var spongeStart = incidentLength - incidentSponge;
+        for (i = 0; i < incidentLength; i += 1) {
+          var t = Math.max(i - spongeStart, 0) / incidentSponge;
+          var incidentSigma = spongeStrength * t * t;
+          incidentGain[i] = 1 / (1 + incidentSigma);
+          incidentLoss[i] = 1 - incidentSigma;
+        }
+      }
+
+      function buildColorTable() {
+        // Diverging map: negative (blue) -> near white -> positive (rose); matches .swatch-field.
+        var negative = [58, 107, 212];
+        var neutral = [246, 245, 250];
+        var positive = [223, 84, 134];
+        for (var i = 0; i < 256; i += 1) {
+          var s = i / 255 * 2 - 1;
+          var end = s < 0 ? negative : positive;
+          var w = Math.abs(s);
+          for (var c = 0; c < 3; c += 1) {
+            colorTable[i * 3 + c] = Math.round(neutral[c] + (end[c] - neutral[c]) * w);
+          }
+        }
       }
 
       function setMessage(text) {
@@ -166,6 +259,8 @@
           simModeEl.textContent = 'Drawing';
           waveStatusEl.textContent = 'Idle';
         }
+        // Only capture touches while drawing, so the page can still scroll otherwise.
+        canvas.style.touchAction = isRunning || isPaused ? 'pan-y' : 'none';
       }
 
       function setButtons() {
@@ -177,14 +272,32 @@
         currentField.fill(0);
         previousField.fill(0);
         nextField.fill(0);
+        incidentCurrent.fill(0);
+        incidentPrevious.fill(0);
+        incidentNext.fill(0);
         stepCount = 0;
       }
 
+      function stopLoop() {
+        if (animationHandle) {
+          window.cancelAnimationFrame(animationHandle);
+          animationHandle = 0;
+        }
+      }
+
+      function scheduleLoop() {
+        if (isRunning && isOnScreen && !animationHandle) {
+          lastTimestamp = null;
+          stepBudget = 0;
+          animationHandle = window.requestAnimationFrame(animate);
+        }
+      }
+
       function clearAll() {
+        stopLoop();
+        finishStroke();
         isRunning = false;
         isPaused = false;
-        isDrawing = false;
-        activePointerId = null;
         obstacleMask.fill(0);
         resetFields();
         updateLabels();
@@ -197,31 +310,32 @@
       function pointerPosition(event) {
         var rect = canvas.getBoundingClientRect();
         return {
-          x: clamp((event.clientX - rect.left) * (canvas.width / rect.width), 0, canvas.width - 1),
-          y: clamp((event.clientY - rect.top) * (canvas.height / rect.height), 0, canvas.height - 1)
+          x: clamp((event.clientX - rect.left) * (displayWidth / rect.width), 0, displayWidth - 1),
+          y: clamp((event.clientY - rect.top) * (displayHeight / rect.height), 0, displayHeight - 1)
         };
       }
 
       function gridPosition(position) {
         return {
           x: clamp(Math.floor(position.x / cellWidth), 0, visibleGridWidth - 1),
-          y: clamp(Math.floor(position.y / cellHeight), 0, gridHeight - 1)
+          y: clamp(Math.floor(position.y / cellHeight), 0, visibleGridHeight - 1)
         };
       }
 
       function paintAt(gridX, gridY) {
+        // Keep obstacles a couple of cells inside the visible edge, where the plane wave is injected.
         for (var y = gridY - brushRadius; y <= gridY + brushRadius; y += 1) {
-          if (y < 0 || y >= gridHeight) {
+          if (y < brushMargin || y >= visibleGridHeight - brushMargin) {
             continue;
           }
           for (var x = gridX - brushRadius; x <= gridX + brushRadius; x += 1) {
-            if (x < 0 || x >= visibleGridWidth) {
+            if (x < brushMargin || x >= visibleGridWidth - brushMargin) {
               continue;
             }
             var dx = x - gridX;
             var dy = y - gridY;
             if (dx * dx + dy * dy <= brushRadius * brushRadius) {
-              obstacleMask[indexFor(x, y)] = 1;
+              obstacleMask[indexFor(x + interiorLeft, y + interiorTop)] = 1;
             }
           }
         }
@@ -241,22 +355,47 @@
 
       var lastGridPoint = null;
 
+      function pointerLabel(pointerType) {
+        if (pointerType === 'touch') {
+          return 'Touch';
+        }
+        if (pointerType === 'pen') {
+          return 'Pen';
+        }
+        return 'Mouse';
+      }
+
+      function finishStroke() {
+        if (activePointerId !== null && canvas.hasPointerCapture && canvas.hasPointerCapture(activePointerId)) {
+          canvas.releasePointerCapture(activePointerId);
+        }
+        isDrawing = false;
+        activePointerId = null;
+        lastGridPoint = null;
+      }
+
       function beginDrawing(event) {
-        if (isRunning || isPaused) {
+        if (isRunning || isPaused || isDrawing) {
+          return;
+        }
+        if (event.pointerType === 'mouse' && event.button !== 0) {
           return;
         }
         event.preventDefault();
         activePointerId = event.pointerId;
         isDrawing = true;
-        pointerInside = true;
-        inputModeEl.textContent = event.pointerType === 'touch' ? 'Touch' : 'Mouse';
+        inputModeEl.textContent = pointerLabel(event.pointerType);
         var point = gridPosition(pointerPosition(event));
         lastGridPoint = point;
         paintAt(point.x, point.y);
         hint.textContent = 'Drawing obstacle...';
         setMessage('Release to finish sketching, or keep drawing to build a thicker scatterer.');
         render();
-        canvas.setPointerCapture(event.pointerId);
+        try {
+          canvas.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // Capture is a convenience; drawing still works without it.
+        }
       }
 
       function moveDrawing(event) {
@@ -275,24 +414,66 @@
           return;
         }
         event.preventDefault();
-        isDrawing = false;
-        activePointerId = null;
-        lastGridPoint = null;
-        hint.textContent = 'Press Start to launch the plane wave.';
-        setMessage('Obstacle ready. Press Start to send a monochromatic plane wave from left to right.');
-        if (canvas.hasPointerCapture(event.pointerId)) {
-          canvas.releasePointerCapture(event.pointerId);
+        finishStroke();
+        if (!isRunning && !isPaused) {
+          hint.textContent = 'Press Start to launch the plane wave.';
+          setMessage('Obstacle ready. Press Start to send a monochromatic plane wave from left to right.');
         }
       }
 
-      function applySource(step) {
-        var phase = Math.sin(step * frequency) * sourceAmplitude;
-        for (var y = 2; y < gridHeight - 2; y += 1) {
-          var index = indexFor(1, y);
-          if (!obstacleMask[index]) {
-            currentField[index] = phase;
-            previousField[index] = phase;
-          }
+      function sourceValue(step) {
+        // Smoothly ramp the amplitude in to avoid a broadband start transient.
+        var ramp = step < sourceRampSteps ? 0.5 - 0.5 * Math.cos(Math.PI * step / sourceRampSteps) : 1;
+        return Math.sin(step * frequency) * sourceAmplitude * ramp;
+      }
+
+      function incidentAt(x) {
+        return incidentCurrent[x - interiorLeft + incidentLead];
+      }
+
+      function stepIncidentWave() {
+        for (var i = 1; i < incidentLength - 1; i += 1) {
+          var center = incidentCurrent[i];
+          var laplacian = incidentCurrent[i - 1] + incidentCurrent[i + 1] - 2 * center;
+          incidentNext[i] = (2 * center - incidentLoss[i] * incidentPrevious[i] + waveSpeed2 * laplacian) * incidentGain[i];
+        }
+        // The 1D grid carries only the incoming wave, so a hard source at its end is safe.
+        incidentNext[0] = sourceValue(stepCount + 1);
+        incidentNext[incidentLength - 1] = 0;
+
+        var swap = incidentPrevious;
+        incidentPrevious = incidentCurrent;
+        incidentCurrent = incidentNext;
+        incidentNext = swap;
+      }
+
+      function injectIncidentWave() {
+        // Inside the visible region the grid stores the total field, outside only the scattered
+        // field; neighbours across that boundary are corrected by the incident wave.
+        var x;
+        var y;
+        var idx;
+        var incident;
+        var leftOutside = incidentAt(interiorLeft - 1);
+        var leftInside = incidentAt(interiorLeft);
+        var rightInside = incidentAt(interiorRight);
+        var rightOutside = incidentAt(interiorRight + 1);
+        for (y = interiorTop; y <= interiorBottom; y += 1) {
+          nextField[indexFor(interiorLeft, y)] += waveSpeed2 * leftOutside;
+          idx = indexFor(interiorLeft - 1, y);
+          nextField[idx] -= waveSpeed2 * leftInside * spongeGain[idx];
+          nextField[indexFor(interiorRight, y)] += waveSpeed2 * rightOutside;
+          idx = indexFor(interiorRight + 1, y);
+          nextField[idx] -= waveSpeed2 * rightInside * spongeGain[idx];
+        }
+        for (x = interiorLeft; x <= interiorRight; x += 1) {
+          incident = incidentAt(x);
+          nextField[indexFor(x, interiorTop)] += waveSpeed2 * incident;
+          idx = indexFor(x, interiorTop - 1);
+          nextField[idx] -= waveSpeed2 * incident * spongeGain[idx];
+          nextField[indexFor(x, interiorBottom)] += waveSpeed2 * incident;
+          idx = indexFor(x, interiorBottom + 1);
+          nextField[idx] -= waveSpeed2 * incident * spongeGain[idx];
         }
       }
 
@@ -300,156 +481,173 @@
         var x;
         var y;
         var idx;
+        var center;
+        var laplacian;
         for (y = 1; y < gridHeight - 1; y += 1) {
-          for (x = 1; x < gridWidth - 1; x += 1) {
-            idx = indexFor(x, y);
+          idx = indexFor(1, y);
+          for (x = 1; x < gridWidth - 1; x += 1, idx += 1) {
             if (obstacleMask[idx]) {
               nextField[idx] = 0;
               continue;
             }
+            // Sound-hard (Neumann) obstacle: a masked neighbour mirrors the centre value.
+            center = currentField[idx];
+            laplacian =
+              (obstacleMask[idx - 1] ? 0 : currentField[idx - 1] - center) +
+              (obstacleMask[idx + 1] ? 0 : currentField[idx + 1] - center) +
+              (obstacleMask[idx - gridWidth] ? 0 : currentField[idx - gridWidth] - center) +
+              (obstacleMask[idx + gridWidth] ? 0 : currentField[idx + gridWidth] - center);
 
-            var laplacian =
-              currentField[indexFor(x - 1, y)] +
-              currentField[indexFor(x + 1, y)] +
-              currentField[indexFor(x, y - 1)] +
-              currentField[indexFor(x, y + 1)] -
-              4 * currentField[idx];
-
-            var value = (2 * currentField[idx] - previousField[idx] + 0.22 * laplacian) * damping;
-            if (x === gridWidth - 2 || y === 1 || y === gridHeight - 2) {
-              value *= boundaryDamping;
-            }
-            value *= rightAbsorption[x];
-            nextField[idx] = value;
+            // Damped leapfrog: the damping is zero inside and grows quadratically through the sponge.
+            nextField[idx] = (2 * center - spongeLoss[idx] * previousField[idx] + waveSpeed2 * laplacian) * spongeGain[idx];
           }
         }
-
-        for (x = 0; x < gridWidth; x += 1) {
-          nextField[indexFor(x, 0)] = 0;
-          nextField[indexFor(x, gridHeight - 1)] = 0;
-        }
-        for (y = 0; y < gridHeight; y += 1) {
-          nextField[indexFor(gridWidth - 1, y)] = nextField[indexFor(gridWidth - 2, y)] * 0.985;
-          nextField[indexFor(0, y)] = nextField[indexFor(1, y)] * 0.98;
-        }
+        injectIncidentWave();
+        stepIncidentWave();
 
         var swap = previousField;
         previousField = currentField;
         currentField = nextField;
         nextField = swap;
-        applySource(stepCount);
         stepCount += 1;
       }
 
-      function fieldColor(value) {
-        var normalized = clamp((value + 1.1) / 2.2, 0, 1);
-        var red = Math.round(84 + normalized * 166);
-        var green = Math.round(110 + (1 - Math.abs(normalized - 0.5) * 2) * 74);
-        var blue = Math.round(204 + (1 - normalized) * 38);
-        return [red, green, blue];
-      }
-
-      function drawBackground() {
-        var gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-        gradient.addColorStop(0, '#eef4ff');
-        gradient.addColorStop(0.52, '#fdf7ff');
-        gradient.addColorStop(1, '#fff7ef');
-        context.fillStyle = gradient;
-        context.fillRect(0, 0, canvas.width, canvas.height);
-
-        context.strokeStyle = 'rgba(79, 99, 124, 0.08)';
-        context.lineWidth = 1;
-        var stepX = canvas.width / 12;
-        var stepY = canvas.height / 8;
-        for (var x = stepX; x < canvas.width; x += stepX) {
-          context.beginPath();
-          context.moveTo(x, 0);
-          context.lineTo(x, canvas.height);
-          context.stroke();
-        }
-        for (var y = stepY; y < canvas.height; y += stepY) {
-          context.beginPath();
-          context.moveTo(0, y);
-          context.lineTo(canvas.width, y);
-          context.stroke();
-        }
-      }
-
       function drawField() {
-        var image = context.createImageData(canvas.width, canvas.height);
-        var data = image.data;
+        var data = fieldImage.data;
+        var offset = 0;
         var gx;
         var gy;
-        var px;
-        var py;
         var idx;
-        var offset;
-        for (gy = 0; gy < gridHeight; gy += 1) {
-          for (gx = 0; gx < visibleGridWidth; gx += 1) {
-            idx = indexFor(gx, gy);
-            var left = Math.floor(gx * cellWidth);
-            var right = Math.max(left + 1, Math.floor((gx + 1) * cellWidth));
-            var top = Math.floor(gy * cellHeight);
-            var bottom = Math.max(top + 1, Math.floor((gy + 1) * cellHeight));
-            var color;
+        var level;
+        for (gy = 0; gy < visibleGridHeight; gy += 1) {
+          idx = indexFor(interiorLeft, gy + interiorTop);
+          for (gx = 0; gx < visibleGridWidth; gx += 1, idx += 1, offset += 4) {
             if (obstacleMask[idx]) {
-              color = [76, 86, 100];
+              data[offset] = obstacleColor[0];
+              data[offset + 1] = obstacleColor[1];
+              data[offset + 2] = obstacleColor[2];
             } else {
-              color = fieldColor(currentField[idx]);
+              level = Math.round(clamp((currentField[idx] / colorRange + 1) * 0.5, 0, 1) * 255) * 3;
+              data[offset] = colorTable[level];
+              data[offset + 1] = colorTable[level + 1];
+              data[offset + 2] = colorTable[level + 2];
             }
-
-            for (py = top; py < bottom && py < canvas.height; py += 1) {
-              for (px = left; px < right && px < canvas.width; px += 1) {
-                offset = (py * canvas.width + px) * 4;
-                data[offset] = color[0];
-                data[offset + 1] = color[1];
-                data[offset + 2] = color[2];
-                data[offset + 3] = obstacleMask[idx] ? 255 : 210;
-              }
-            }
+            data[offset + 3] = 255;
           }
         }
-        context.putImageData(image, 0, 0);
+        fieldContext.putImageData(fieldImage, 0, 0);
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+        context.drawImage(fieldCanvas, 0, 0, displayWidth, displayHeight);
+      }
+
+      function drawGridLines() {
+        context.save();
+        context.strokeStyle = 'rgba(79, 99, 124, 0.08)';
+        context.lineWidth = 1;
+        context.beginPath();
+        var stepX = displayWidth / 12;
+        var stepY = displayHeight / 8;
+        for (var i = 1; i < 12; i += 1) {
+          context.moveTo(Math.round(i * stepX) + 0.5, 0);
+          context.lineTo(Math.round(i * stepX) + 0.5, displayHeight);
+        }
+        for (var j = 1; j < 8; j += 1) {
+          context.moveTo(0, Math.round(j * stepY) + 0.5);
+          context.lineTo(displayWidth, Math.round(j * stepY) + 0.5);
+        }
+        context.stroke();
+        context.restore();
       }
 
       function drawIncomingArrow() {
+        // Scale with the canvas; on narrow screens move to the bottom so it clears the hint.
+        var scale = clamp(displayWidth / 760, 0.6, 1);
+        var fontSize = Math.round(clamp(13 * scale, 10, 13));
+        var left = 18 * scale;
+        var right = left + 78 * scale;
+        var headLength = 12 * scale;
+        var headWidth = 7 * scale;
+        var y = displayWidth < 520 ? displayHeight - 12 * scale : displayHeight * 0.12;
+        var color = '#24569f';
+        var halo = 'rgba(255, 255, 255, 0.85)';
+
         context.save();
-        context.strokeStyle = 'rgba(45, 103, 190, 0.75)';
-        context.fillStyle = 'rgba(45, 103, 190, 0.75)';
-        context.lineWidth = 2;
+        context.lineJoin = 'round';
+        context.lineCap = 'round';
         context.beginPath();
-        context.moveTo(18, canvas.height * 0.12);
-        context.lineTo(96, canvas.height * 0.12);
+        context.moveTo(left, y);
+        context.lineTo(right - headLength * 0.5, y);
+        context.strokeStyle = halo;
+        context.lineWidth = 2 * scale + 3;
         context.stroke();
+        context.strokeStyle = color;
+        context.lineWidth = 2 * scale;
+        context.stroke();
+
         context.beginPath();
-        context.moveTo(96, canvas.height * 0.12);
-        context.lineTo(84, canvas.height * 0.12 - 7);
-        context.lineTo(84, canvas.height * 0.12 + 7);
+        context.moveTo(right, y);
+        context.lineTo(right - headLength, y - headWidth);
+        context.lineTo(right - headLength, y + headWidth);
         context.closePath();
+        context.strokeStyle = halo;
+        context.lineWidth = 3;
+        context.stroke();
+        context.fillStyle = color;
         context.fill();
-        context.font = '13px system-ui, sans-serif';
-        context.fillText('incoming wave', 18, canvas.height * 0.12 - 10);
+
+        context.font = '600 ' + fontSize + 'px system-ui, sans-serif';
+        context.strokeStyle = halo;
+        context.lineWidth = 3;
+        context.strokeText('incoming wave', left, y - headWidth - 4 * scale);
+        context.fillText('incoming wave', left, y - headWidth - 4 * scale);
         context.restore();
       }
 
       function render() {
-        drawBackground();
+        if (displayWidth <= 0) {
+          return;
+        }
+        context.setTransform(canvas.width / displayWidth, 0, 0, canvas.height / displayHeight, 0, 0);
         drawField();
+        drawGridLines();
         drawIncomingArrow();
       }
 
-      function animate() {
-        if (!isRunning) {
+      function animate(timestamp) {
+        animationHandle = 0;
+        if (!isRunning || !isOnScreen) {
           return;
         }
-        stepSimulation();
-        render();
+        // Advance at a fixed rate regardless of the display refresh rate.
+        var stepDuration = 1000 / stepsPerSecond;
+        if (lastTimestamp === null) {
+          stepBudget = stepDuration;
+        } else {
+          stepBudget += Math.min(timestamp - lastTimestamp, maxStepsPerFrame * stepDuration);
+        }
+        lastTimestamp = timestamp;
+        var steps = 0;
+        while (stepBudget >= stepDuration && steps < maxStepsPerFrame) {
+          stepSimulation();
+          stepBudget -= stepDuration;
+          steps += 1;
+        }
+        if (steps === maxStepsPerFrame) {
+          stepBudget = Math.min(stepBudget, stepDuration);
+        }
+        if (steps > 0) {
+          render();
+        }
         animationHandle = window.requestAnimationFrame(animate);
       }
 
       function startSimulation() {
         if (isRunning) {
           return;
+        }
+        if (isDrawing) {
+          finishStroke();
         }
         if (!isPaused) {
           resetFields();
@@ -460,10 +658,8 @@
         setButtons();
         hint.textContent = 'Plane wave running from left to right.';
         setMessage('The field is evolving. Observe the reflection, shadow region, and diffraction around your shape.');
-        if (animationHandle) {
-          window.cancelAnimationFrame(animationHandle);
-        }
-        animationHandle = window.requestAnimationFrame(animate);
+        stopLoop();
+        scheduleLoop();
       }
 
       function pauseSimulation() {
@@ -472,10 +668,7 @@
         }
         isRunning = false;
         isPaused = true;
-        if (animationHandle) {
-          window.cancelAnimationFrame(animationHandle);
-          animationHandle = 0;
-        }
+        stopLoop();
         updateLabels();
         setButtons();
         hint.textContent = 'Simulation paused.';
@@ -483,34 +676,40 @@
       }
 
       function handleResize() {
-        resizeCanvas();
-        render();
+        if (resizeCanvas()) {
+          render();
+        }
       }
 
       canvas.addEventListener('pointerdown', beginDrawing);
       canvas.addEventListener('pointermove', moveDrawing);
       canvas.addEventListener('pointerup', endDrawing);
       canvas.addEventListener('pointercancel', endDrawing);
-      canvas.addEventListener('pointerleave', function () {
-        pointerInside = false;
-      });
-      canvas.addEventListener('pointerenter', function () {
-        pointerInside = true;
-      });
 
       startButton.addEventListener('click', startSimulation);
       pauseButton.addEventListener('click', pauseSimulation);
-      clearButton.addEventListener('click', function () {
-        if (animationHandle) {
-          window.cancelAnimationFrame(animationHandle);
-          animationHandle = 0;
-        }
-        clearAll();
-      });
+      clearButton.addEventListener('click', clearAll);
+
+      if (window.ResizeObserver) {
+        new window.ResizeObserver(handleResize).observe(stage);
+      }
+      // Also catches devicePixelRatio changes (zoom, moving between displays).
       window.addEventListener('resize', handleResize);
 
+      if (window.IntersectionObserver) {
+        new window.IntersectionObserver(function (entries) {
+          isOnScreen = entries[entries.length - 1].isIntersecting;
+          if (isOnScreen) {
+            scheduleLoop();
+          } else {
+            stopLoop();
+          }
+        }).observe(canvas);
+      }
+
+      buildAbsorbingLayers();
+      buildColorTable();
       resizeCanvas();
-      buildAbsorbingLayer();
       updateLabels();
       setButtons();
       render();

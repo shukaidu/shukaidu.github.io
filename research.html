@@ -6,7 +6,7 @@
   <meta name="description" content="Research highlights from Shukai Du: element learning, adaptive-mesh inversion, symplectic Hamiltonian FEM, and HDG projection-based analysis.">
   <title>Research | Shukai Du</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=20260930">
+  <link rel="stylesheet" href="style.css?v=20261012">
 </head>
 <body>
   <nav class="topnav" aria-label="Main navigation">
@@ -24,19 +24,19 @@
       <h1>Research</h1>
     </header>
 
-    <p>My research focuses on high-order numerical methods for high-dimensional and multiscale systems, data-driven and machine learning acceleration of principle-based numerical approaches, and applications such as electromagnetic waves, radiative transfer, and inverse problems. Below are selected research highlights.</p>
+    <p>My research focuses on high-order numerical methods for high-dimensional and multiscale systems, data-driven and machine learning acceleration of first-principles numerical approaches, and applications such as electromagnetic waves, radiative transfer, and inverse problems. Below are selected research highlights.</p>
 
     <p>Full publication list: see <a href="publications.html">publications</a></p>
 
-    <h3>Element learning: a systematic approach of accelerating finite element-type methods via machine learning</h3>
+    <h2>Element learning: a systematic approach of accelerating finite element-type methods via machine learning</h2>
     <p>My research in this area centers on two closely related questions:</p>
     <ol>
-      <li>What are the advantages and limitations of machine learning based methods compared to classical numerical methods (e.g. finite element)?</li>
+      <li>What are the advantages and limitations of machine learning-based methods compared to classical numerical methods (e.g. finite element)?</li>
       <li>How to combine their advantages?</li>
     </ol>
 
-    <p>Thinking about the above two questions has led to a recent discovery of a new computational
-    framework which we call element learning. This new approach can be used to systematically
+    <p>Thinking about the above two questions has led us to a new computational
+    framework, which we call element learning. This new approach can be used to systematically
     accelerate finite element-type methods through machine learning while still retaining
     the many advantages of classical finite element-type methods, such as proficient handling
     of complex geometry and boundary conditions, reliability, etc.
@@ -45,24 +45,26 @@
     <p>The video below gives a short introduction to element learning; the figures that follow show one of our numerical results and a visual explanation of the core idea.</p>
 
     <figure>
-      <video src="movie/element_learning_explainer_en.mp4" controls preload="metadata" width="750"></video>
+      <video src="movie/element_learning_explainer_en.mp4" controls playsinline preload="metadata" width="750" height="422" poster="movie/element_learning_explainer_poster.jpg">
+        <a href="movie/element_learning_explainer_en.mp4">Download the video</a>
+      </video>
       <figcaption>Video explainer: an introduction to element learning (6 min).</figcaption>
     </figure>
     <figure>
-      <img src="rs_ELvsDG.png" alt="Element learning - results" width="750">
+      <img src="rs_ELvsDG.png" alt="Numerical results comparing element learning with a discontinuous Galerkin method" width="750" height="215" loading="lazy">
       <figcaption>Numerical results comparing element learning (EL) with a standard discontinuous Galerkin method, showing speed-up while maintaining accuracy.</figcaption>
     </figure>
     <figure>
-      <img src="elem_learning.png" alt="Element learning - core ideas" width="700">
+      <img src="elem_learning.png" alt="Diagram of element learning: local element computations replaced by a trained neural network" width="700" height="430" loading="lazy">
       <figcaption>Core idea of element learning: local element computations in a finite element-type method are replaced by a trained neural network.</figcaption>
     </figure>
     <ul>
-      <li>S. Du, and S. N. Stechmann. Element learning: a systematic approach of accelerating finite element-type methods via machine learning, with applications to radiative transfer. <br>
+      <li>S. Du and S. N. Stechmann. Element learning: a systematic approach of accelerating finite element-type methods via machine learning, with applications to radiative transfer. <br>
         J. Comput. Math. (2024).
         <a href="https://doi.org/10.4208/jcm.2407-m2024-0047" target="_blank">DOI: 10.4208/jcm.2407-m2024-0047</a></li>
     </ul>
 
-    <h3>Adaptive-mesh inversion: a goal-oriented hp-adaptive mesh refinement method for solving inverse radiative transfer problem</h3>
+    <h2>Adaptive-mesh inversion: a goal-oriented hp-adaptive mesh refinement method for solving inverse radiative transfer problems</h2>
     <p>Inverse radiative transfer serves as the mathematical foundation for a wide spectrum of applications such as optical tomography and remote sensing.
     Despite its broad applications, devising numerical methods for inverse radiative transfer
     is notoriously challenging due to the high-dimensional nature of the forward
@@ -73,35 +75,35 @@
     are memory-efficient and have fewer degrees of freedom (DOFs) without compromising on
     accuracy.</p>
 
-    <p>To address the challenges previously mentioned, we introduced the so called adaptive-mesh
+    <p>To address the challenges previously mentioned, we introduced the so-called adaptive-mesh
     inversion method. This is a <strong>goal-oriented</strong> hp-<strong>adaptive mesh refinement</strong> (AMR) technique tailored
     for solving <strong>inverse problems</strong>. A distinctive feature of the approach is the integration of
     two optimization processes: one for inversion and the other for mesh adaptivity. By leveraging
     the connections between duality-based mesh adaptivity and adjoint-based inversion
-    techniques, we are able to devise a goal-oriented error estimator. This estimator is cost effective
+    techniques, we are able to devise a goal-oriented error estimator. This estimator is cost-effective
     to compute. The numerical tests suggest it can efficiently steer mesh-refinement to
     effectively address the inverse radiative transfer problem.
     The main idea of the methodology can be visually represented as in the following figure.</p>
 
     <figure>
-      <img src="adap_mesh_inv.png" alt="Adaptive mesh inversion - core ideas" width="700">
+      <img src="adap_mesh_inv.png" alt="Diagram of the adaptive-mesh inversion framework with nested inversion and mesh-adaptivity loops" width="700" height="145" loading="lazy">
       <figcaption>The adaptive-mesh inversion framework: two nested optimization loops for inversion and goal-oriented mesh adaptivity.</figcaption>
     </figure>
     <figure>
-      <img src="fwd_sol_goal_sensor.png" alt="Goal-oriented adaptive mesh" width="350">
-      <img src="fwd_sol_standard.png" alt="Standard uniform mesh" width="350">
+      <img src="fwd_sol_goal_sensor.png" alt="Forward solution on a goal-oriented adaptive mesh refined near the sensor region" width="350" height="263" loading="lazy">
+      <img src="fwd_sol_standard.png" alt="Forward solution on a mesh from standard adaptive mesh refinement" width="350" height="263" loading="lazy">
       <figcaption>Left: goal-oriented adaptive mesh refined near the sensor region. Right: standard adaptive mesh refinement for comparison.</figcaption>
     </figure>
     <ul>
-      <li>S. Du, and S. N. Stechmann. Inverse radiative transfer with goal-oriented hp-adaptive mesh refinement: adaptive-mesh inversion. <br>
+      <li>S. Du and S. N. Stechmann. Inverse radiative transfer with goal-oriented hp-adaptive mesh refinement: adaptive-mesh inversion. <br>
         Inverse Probl. 39 (2023), no. 11.
         <a href="https://doi.org/10.1088/1361-6420/acf785" target="_blank">DOI: 10.1088/1361-6420/acf785</a></li>
-      <li>S. Du, and S. N. Stechmann. Fast, low-memory numerical methods for radiative transfer via hp-adaptive mesh refinement. <br>
+      <li>S. Du and S. N. Stechmann. Fast, low-memory numerical methods for radiative transfer via hp-adaptive mesh refinement. <br>
         J. Comput. Phys. 480 (2023).
         <a href="https://doi.org/10.1016/j.jcp.2023.112021" target="_blank">DOI: 10.1016/j.jcp.2023.112021</a></li>
     </ul>
 
-    <h3>Symplectic Hamiltonian finite element methods for electromagnetics</h3>
+    <h2>Symplectic Hamiltonian finite element methods for electromagnetics</h2>
     <p>Symplectic Hamiltonian finite element methods (SHFEM) are a special type of numerical methods
     for numerically approximating the solution of Hamiltonian partial differential
     equations. These methods use Galerkin space-discretizations which result in a
@@ -110,37 +112,37 @@
     time-marching method. This combination results in <strong>high-order accurate</strong>, fully
     discrete methods which can <strong>preserve the invariants of the Hamiltonian</strong> defining
     the ODE system. The following figure shows an example with electromagnetic waves propagating in a non-homogeneous medium.
-    It shows that our SHFEM method conserves the energy of the semidiscretization in space up to 10 digits of precision,
+    It shows that our SHFEM conserves the energy of the semidiscretization in space up to 10 digits of precision,
     and does not allow the exact energy to drift in time.</p>
     <figure>
-      <img src="symp_max.png" alt="SHFEM energy conservation" width="700">
+      <img src="symp_max.png" alt="Energy conservation of SHFEM for electromagnetic waves in a non-homogeneous medium" width="700" height="262" loading="lazy">
       <figcaption>Energy conservation in SHFEM for electromagnetic waves in a non-homogeneous medium: the method preserves the discrete Hamiltonian to 10 digits of precision with no drift over time.</figcaption>
     </figure>
     <ul>
       <li>B. Cockburn, S. Du, and M. A. S&aacute;nchez. A priori error analysis of new semidiscrete, Hamiltonian HDG methods for the time-dependent Maxwell's equations. <br>
-        ESAIM: M2AN, 57 (2023), no.4, 2097 – 2129.
+        ESAIM: M2AN 57 (2023), no. 4, 2097–2129.
         <a href="https://doi.org/10.1051/m2an/2023048" target="_blank">DOI: 10.1051/m2an/2023048</a></li>
-      <li>B. Cockburn, S. Du, and M. A. S&aacute;nchez. Combining finite element space-discretization with symplectic time-marching schemes for linear hamiltonian systems. <br>
+      <li>B. Cockburn, S. Du, and M. A. S&aacute;nchez. Combining finite element space-discretization with symplectic time-marching schemes for linear Hamiltonian systems. <br>
         Front. Appl. Math. Stat. 9 (2023).
         <a href="https://doi.org/10.3389/fams.2023.1165371" target="_blank">DOI: 10.3389/fams.2023.1165371</a></li>
-      <li>M. A. S&aacute;nchez, S. Du, B. Cockburn, N.-C. Nguyen, J. Peraire. Symplectic Hamiltonian finite element methods for electromagnetics. <br>
+      <li>M. A. S&aacute;nchez, S. Du, B. Cockburn, N.-C. Nguyen, and J. Peraire. Symplectic Hamiltonian finite element methods for electromagnetics. <br>
         Comput. Methods Appl. Mech. Engrg. 396 (2022).
         <a href="https://doi.org/10.1016/j.cma.2022.114969" target="_blank">DOI: 10.1016/j.cma.2022.114969</a></li>
-      <li>B. Cockburn, M. A. S&aacute;nchez, S. Du. Discontinuous Galerkin methods with time-operators in their numerical traces for time-dependent electromagnetics. <br>
-        Comput. Meth. Appl. Math. 22 (2022), no. 4, 775-796.
-        <a href="https://www.degruyter.com/document/doi/10.1515/cmam-2021-0215/html" target="_blank">DOI: 10.1515/cmam-2021-0215</a></li>
+      <li>B. Cockburn, M. A. S&aacute;nchez, and S. Du. Discontinuous Galerkin methods with time-operators in their numerical traces for time-dependent electromagnetics. <br>
+        Comput. Meth. Appl. Math. 22 (2022), no. 4, 775–796.
+        <a href="https://doi.org/10.1515/cmam-2021-0215" target="_blank">DOI: 10.1515/cmam-2021-0215</a></li>
     </ul>
 
-    <h3>Generalized projection-based analysis of hybridizable discontinuous Galerkin methods</h3>
+    <h2>Generalized projection-based analysis of hybridizable discontinuous Galerkin methods</h2>
     <p>Hybridizable discontinuous Galerkin methods (HDG)
     lie in between the two most important groups of finite element-type methods:
     (1) conforming/mixed methods and (2) discontinuous Galerkin (DG) methods.
     This enables HDG to combine the many advantages from these two groups.
     </p>
     <p>
-    Despite the many advantages of HDG methods, their analysis was also separated into two groups: for those more alike mixed methods, they were analyzed similar
+    Despite the many advantages of HDG methods, their analysis was also separated into two groups: those more akin to mixed methods were analyzed similarly
     to the classical analysis of mixed methods, by the so-called projection-based analysis; on
-    the other hand, for those more alike nonconforming/DG methods, they were analyzed by
+    the other hand, those more akin to nonconforming/DG methods were analyzed by
     ad hoc approaches. This separation of analysis has several undesired consequences:
     (1) Those ad hoc analyses are not as concise and simple as the projection-based analysis,
     (2) Ad hoc analysis becomes difficult for complicated problems (e.g., time-dependent problems, coupling problems),
@@ -149,31 +151,31 @@
     <p>
     To address this issue, we developed the so-called generalized projection-based analysis,
     extending the classical projection-based analysis to those HDG methods that do not admit
-    M-decomposition (e.g. Lehrenfeld-Schoberl HDG), thus enabling a <strong>unified analysis</strong>. With these new analysis tools,
+    M-decomposition (e.g. Lehrenfeld&ndash;Sch&ouml;berl HDG), thus enabling a <strong>unified analysis</strong>. With these new analysis tools,
     we are able to devise/analyze new HDG methods or improve the analysis of existing ones.
     The applications include time-harmonic and transient
     elastic waves, static and time-dependent Maxwell's equations and Stokes equations.
     </p>
 
     <figure>
-      <img src="prj_ana.png" alt="HDG projection-based analysis" width="500">
+      <img src="prj_ana.png" alt="Diagram of the generalized projection-based analysis framework for HDG methods" width="500" height="391" loading="lazy">
       <figcaption>The generalized projection-based analysis framework unifies the error analysis of HDG methods across both mixed and nonconforming/DG families.</figcaption>
     </figure>
     <ul>
       <li>B. Cockburn, S. Du, and M. A. S&aacute;nchez. A priori error analysis of new semidiscrete, Hamiltonian HDG methods for the time-dependent Maxwell's equations. <br>
-        ESAIM: M2AN, 57 (2023), no.4, 2097 – 2129.
+        ESAIM: M2AN 57 (2023), no. 4, 2097–2129.
         <a href="https://doi.org/10.1051/m2an/2023048" target="_blank">DOI: 10.1051/m2an/2023048</a></li>
-      <li>S. Du, and F.-J. Sayas. A note on devising HDG+ projections on polyhedral elements. <br>
-        Math. Comp. 90 (2021), 65-79.
+      <li>S. Du and F.-J. Sayas. A note on devising HDG+ projections on polyhedral elements. <br>
+        Math. Comp. 90 (2021), 65–79.
         <a href="https://doi.org/10.1090/mcom/3573" target="_blank">DOI: 10.1090/mcom/3573</a></li>
       <li>S. Du. HDG methods for the Stokes equation based on strong symmetric stress formulations. <br>
         J. Sci. Comput. 85, 8 (2020).
         <a href="https://doi.org/10.1007/s10915-020-01309-7" target="_blank">DOI: 10.1007/s10915-020-01309-7</a></li>
-      <li>S. Du, and F.-J. Sayas. A unified error analysis of hybridizable discontinuous Galerkin methods for the static Maxwell equations. <br>
+      <li>S. Du and F.-J. Sayas. A unified error analysis of hybridizable discontinuous Galerkin methods for the static Maxwell equations. <br>
         SIAM J. Numer. Anal. 58 (2020), no. 2, 1367–1391.
         <a href="https://doi.org/10.1137/19M1290966" target="_blank">DOI: 10.1137/19M1290966</a></li>
-      <li>S. Du, and F.-J. Sayas. New analytical tools for HDG in elasticity, with applications to elastodynamics. <br>
-        Math. Comp. 89 (2020), 1745-1782.
+      <li>S. Du and F.-J. Sayas. New analytical tools for HDG in elasticity, with applications to elastodynamics. <br>
+        Math. Comp. 89 (2020), 1745–1782.
         <a href="https://doi.org/10.1090/mcom/3499" target="_blank">DOI: 10.1090/mcom/3499</a></li>
     </ul>
 
